@@ -3,10 +3,11 @@ import argparse
 from common import Cell, Game
 from random import randrange
 import math
-from draw import drawCell, drawSmile, getScreenSize
+from draw import closeDraw, initDraw, drawCell, drawSmile, getScreenSize, refreshScreen
 import KIP
 import time
 from stack import Stack
+import threading
 
 touchPath = "/dev/input/event1"
 
@@ -45,7 +46,7 @@ def placeMines(cells: list[list[Cell]], maxX: int, mineCount: int) -> list[Cell]
     cellsWithMines: list[Cell] = []
     for _ in range(mineCount):
         randomNumber = randomNumberGenerator()
-        if randomNumber == None:
+        if randomNumber is None:
             continue
 
         x = math.floor(randomNumber % maxX)
@@ -103,6 +104,37 @@ def openMultiple(game: Game, cell: Cell):
                     myStack.push(neighbour)
                 drawCell(game, neighbour)
 
+def endGame(game: Game, won: bool):
+    game.gameOver = True
+    if not won:
+        game.hitMine = True
+        for row in game.cells:
+            for cell in row:
+                cell.isOpen = True
+                
+    else:
+        for row in game.cells:
+            for cell in row:
+                if cell.isOpen:
+                    continue
+                cell.isFlagged = True
+
+    drawBoard(game)
+
+def checkWin(game: Game):
+    if game.nonMineCellsOpened < (game.maxX * game.maxY) - game.minesCount:
+        return
+    endGame(game, True)
+
+def flagCell(game: Game, cell: Cell):
+    if cell.isFlagged:
+        cell.isFlagged = False
+    else:
+        if not cell.isOpen:
+            cell.isFlagged = True
+
+    drawCell(game, cell)
+
 def openCell(game: Game, cell: Cell):
     if game.clicks == 0:
         if cell.isMine:
@@ -114,8 +146,7 @@ def openCell(game: Game, cell: Cell):
     if not cell.isFlagged and not cell.isOpen:
         if cell.isMine:
             cell.isOpen = True
-            game.gameOver = True
-            # end game
+            endGame(game, False)
         else:
             if cell.number == 0:
                 openMultiple(game, cell)
@@ -125,7 +156,7 @@ def openCell(game: Game, cell: Cell):
 
     game.clicks += 1
     drawCell(game, cell)
-    # check win
+    checkWin(game)
     
 
 def createGame(x: int, y: int, mines: int):
@@ -135,6 +166,7 @@ def createGame(x: int, y: int, mines: int):
     return currentGame
 
 def drawBoard(game: Game):
+    refreshScreen()
     for cell1 in game.cells:
         for cell2 in cell1:
             drawCell(game, cell2)
@@ -156,60 +188,98 @@ def isSmileTouched(game: Game, touchX: int, touchY: int):
         return True
     return False
 
-def debouncer(timeMs: int):
-    lastTouchTime = time.time() * 1000
-
-    def checkDebounce():
-        nonlocal lastTouchTime
-        if lastTouchTime + timeMs > time.time() * 1000:
-            return True
-
-        lastTouchTime = time.time() * 1000
-        return False
-    return checkDebounce
+def isCloseTouched(touchX: int, touchY: int):
+    if 0 <= touchX <= 70 and 0 <= touchY < 70:
+        return True
+    return False
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-x', dest='x', type=int, help='')
-    parser.add_argument('-y', dest='y', type=int, help='')
-    parser.add_argument('-mines', dest='mines', type=int, help='')
+    parser.add_argument('-x', dest='x', type=int, help='Number of rows')
+    parser.add_argument('-y', dest='y', type=int, help='Number of columns')
+    parser.add_argument('-mines', dest='mines', type=int, help='Number of mines')
     args = parser.parse_args()
     x = args.x or 9
     y = args.y or 9
     mines = args.mines or 10
 
-    # check if mines is greater then board size
-    
+    if mines >= x * y:
+        mines = (x*y) - 1
+
+    initDraw()
     currentGame = createGame(x,y,mines)
     drawBoard(currentGame)
     screenWidth, screenHeight = getScreenSize()
     touch = KIP.inputObject(touchPath, screenWidth, screenHeight, grabInput=True)
-    debounce = debouncer(200)
+
+    pressing = False
+    pressTime = 0
+    oldTouchX = 0
+    oldTouchY = 0
     
     while True:
-        touchX, touchY, err = touch.getInput()
+        touchX, touchY, touchPressed, _, err = touch.getInput()
 
         if err:
             continue
 
-        if debounce():
-            continue
-        print("touch input") # gets spammed on restart for some reason
-        smileTouched = isSmileTouched(currentGame, touchX, touchY)
-    
-        if smileTouched:
-            currentGame = createGame(x,y,mines)
-            drawBoard(currentGame)
+        if touchX is None or touchY is None:
             continue
 
-        if currentGame.gameOver:
+        if touchPressed:
+            oldTouchX = touchX
+            oldTouchY = touchY
+
+        if touchPressed and pressing:
             continue
 
-        touchedCell = getCellTouched(currentGame, touchX, touchY)
+        if touchPressed and not pressing:
+            pressing = True
+            pressTime = time.time() * 1000
 
-        if touchedCell is None:
-            continue
-        openCell(currentGame, touchedCell)
+        if not touchPressed and pressing:
+            pressing = False
+            pressHeld = pressTime + 400 < time.time() * 1000
+
+            if pressHeld:
+                if currentGame.gameOver:
+                    continue
+                touchedCell = getCellTouched(currentGame, oldTouchX, oldTouchY)
+
+                if touchedCell is None:
+                    continue
+                
+                flagCell(currentGame, touchedCell)
+                
+            else:
+                closeTouched = isCloseTouched(oldTouchX, oldTouchY)
+
+                if closeTouched:
+                    closeDraw()
+                    break
+                    
+                smileTouched = isSmileTouched(currentGame, oldTouchX, oldTouchY)
+            
+                if smileTouched:
+                    currentGame = createGame(x,y,mines)
+                    t = threading.Thread(target=drawBoard, args=(currentGame,))
+                    t.start()
+                    continue
+         
+                if currentGame.gameOver:
+                    continue
+
+                touchedCell = getCellTouched(currentGame, oldTouchX, oldTouchY)
+                
+
+                if touchedCell is None:
+                    continue
+                    
+                openCell(currentGame, touchedCell)
+
+
+        
+    print("Goodbye")
 
 if __name__ == "__main__":
     main()

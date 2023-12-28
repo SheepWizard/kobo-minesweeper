@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Cell:
     x: int
@@ -12,6 +13,7 @@ class Cell:
     screenY: int = 0
     size: int = 0
 
+
 @dataclass
 class Game:
     cells: list[list[Cell]]
@@ -20,6 +22,6 @@ class Game:
     minesCount: int
     nonMineCellsOpened: int = 0
     clicks: int = 0
-    smileRect: (int, int, int, int) = (0,0,0,0)
+    smileRect: tuple[int, int, int, int] = (0, 0, 0, 0)
     gameOver: bool = False
-    
+    hitMine: bool = False
