@@ -52,7 +52,7 @@ def displayImage(path: str, width: int, height: int, xPos: int, yPos: int):
 
     try:
         FBInk.fbink_print_raw_data(fbfd, rawData, width, height, rawLen, xPos, yPos, fbink_cfg)
-    except Exeception as e:
+    except Exception as e:
         print("Fails to draw: ", e)
         
     
