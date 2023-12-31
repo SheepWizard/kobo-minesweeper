@@ -3,11 +3,12 @@ import argparse
 from common import Cell, Game
 from random import randrange
 import math
-from draw import closeDraw, initDraw, drawCell, drawSmile, getScreenSize, refreshScreen
+from draw import drawCloseIcon, drawTimer, drawFlagCount, closeDraw, initDraw, drawCell, drawSmile, getScreenSize, refreshScreen
 import KIP
 import time
 from stack import Stack
 import threading
+from shell import killNickel, restartNickel
 
 touchPath = "/dev/input/event1"
 
@@ -118,8 +119,12 @@ def endGame(game: Game, won: bool):
                 if cell.isOpen:
                     continue
                 cell.isFlagged = True
+                game.flagsPlaced += 1
 
+    timeDiff = (time.time() * 1000) - game.startTime
     drawBoard(game)
+    drawTimer(math.floor(timeDiff / 1000))
+    drawFlagCount(game.minesCount - game.flagsPlaced)
 
 def checkWin(game: Game):
     if game.nonMineCellsOpened < (game.maxX * game.maxY) - game.minesCount:
@@ -129,11 +134,14 @@ def checkWin(game: Game):
 def flagCell(game: Game, cell: Cell):
     if cell.isFlagged:
         cell.isFlagged = False
+        game.flagsPlaced -= 1
     else:
         if not cell.isOpen:
             cell.isFlagged = True
+            game.flagsPlaced += 1
 
     drawCell(game, cell)
+    drawFlagCount(game.minesCount - game.flagsPlaced)
 
 def openCell(game: Game, cell: Cell):
     if game.clicks == 0:
@@ -141,7 +149,7 @@ def openCell(game: Game, cell: Cell):
             moveMine(game, cell)
             openCell(game, cell)
             return
-        # start timer 
+        game.startTime = time.time() * 1000 
         
     if not cell.isFlagged and not cell.isOpen:
         if cell.isMine:
@@ -171,6 +179,10 @@ def drawBoard(game: Game):
         for cell2 in cell1:
             drawCell(game, cell2)
     drawSmile(game)
+    drawTimer(0)
+    drawFlagCount(game.minesCount)
+    drawCloseIcon()
+    
 
 def getCellTouched(game: Game, touchX: int, touchY: int):
     for rows in game.cells:
@@ -206,12 +218,13 @@ def main():
     if mines >= x * y:
         mines = (x*y) - 1
 
+    killNickel()
     initDraw()
     currentGame = createGame(x,y,mines)
     drawBoard(currentGame)
     screenWidth, screenHeight = getScreenSize()
     touch = KIP.inputObject(touchPath, screenWidth, screenHeight, grabInput=True)
-
+    
     pressing = False
     pressTime = 0
     oldTouchX = 0
@@ -255,7 +268,6 @@ def main():
                 closeTouched = isCloseTouched(oldTouchX, oldTouchY)
 
                 if closeTouched:
-                    closeDraw()
                     break
                     
                 smileTouched = isSmileTouched(currentGame, oldTouchX, oldTouchY)
@@ -278,7 +290,8 @@ def main():
                 openCell(currentGame, touchedCell)
 
 
-        
+    closeDraw()
+    restartNickel()
     print("Goodbye")
 
 if __name__ == "__main__":

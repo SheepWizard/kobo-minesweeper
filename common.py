@@ -20,8 +20,10 @@ class Game:
     maxX: int
     maxY: int
     minesCount: int
+    flagsPlaced: int = 0
     nonMineCellsOpened: int = 0
     clicks: int = 0
+    startTime: int = 0
     smileRect: tuple[int, int, int, int] = (0, 0, 0, 0)
     gameOver: bool = False
     hitMine: bool = False

@@ -11,7 +11,18 @@ fbink_cfg.is_halfway = True
 
 path = os.path.dirname(__file__)
 
-# add way to close fbfd
+dotDisplayImages = [
+    "number_0.png",
+    "number_1.png",
+    "number_2.png",
+    "number_3.png",
+    "number_4.png",
+    "number_5.png",
+    "number_6.png",
+    "number_7.png",
+    "number_8.png",
+    "number_9.png",
+]
 
 
 def getImageNameFromNumber(number: int):
@@ -32,9 +43,55 @@ def getCellImage(cell: Cell):
 
     return getImageNameFromNumber(cell.number)
 
+def displayImage(path: str, width: int, height: int, xPos: int, yPos: int):
+    image = Image.open(path)
+    image = image.resize((width, height))
+
+    rawData = image.tobytes("raw")
+    rawLen = len(rawData)
+
+    try:
+        FBInk.fbink_print_raw_data(fbfd, rawData, width, height, rawLen, xPos, yPos, fbink_cfg)
+    except Exeception as e:
+        print("Fails to draw: ", e)
+        
+    
+
+def drawDotDisplay(number: int, position: str):
+    yPadding = 120
+    xPadding = 50
+    screenWidth, _ = getScreenSize()
+
+    digitHeight = math.floor(screenWidth / 10)
+    digitWidth = math.floor(digitHeight / 2)
+
+    number = max(-99, min(number, 999))
+    negative = number < 0
+
+    string = str(number)
+    offset = 3 - len(string)
+    
+    xStart = xPadding
+    if position == "right":
+        xStart = screenWidth - xPadding - (digitWidth*3)
+
+    for i in range(3):
+        if i >= offset:
+            subStr = string[i-offset]
+            if subStr == "-":
+                imagePath = f"{path}/assets/number_blank.png"
+                displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
+            else:
+                imagePath = f"{path}/assets/{dotDisplayImages[int(subStr)]}"
+                displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
+        else:
+            imagePath = f"{path}/assets/{dotDisplayImages[0]}"
+            displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
+        xStart += digitWidth
+
 
 def drawSmile(game: Game):
-    yPadding = 50
+    yPadding = 120
     screenWidth, _ = getScreenSize()
 
     smileSize = math.floor(screenWidth / 10)
@@ -48,20 +105,9 @@ def drawSmile(game: Game):
         else:
             smilePath = f"{path}/assets/smiley_win.png"
 
-    smileImage = Image.open(smilePath)
-    smileImage = smileImage.resize((smileSize, smileSize))
-
-    raw_data = smileImage.tobytes("raw")
-    raw_len = len(raw_data)
-
     game.smileRect = (xPos, xPos + smileSize, yPadding, yPadding + smileSize)
 
-    try:
-        FBInk.fbink_print_raw_data(
-            fbfd, raw_data, smileSize, smileSize, raw_len, xPos, yPadding, fbink_cfg)
-    except Exception as e:
-        print("drawSmile: ", e)
-        FBInk.fbink_close(fbfd)
+    displayImage(smilePath, smileSize, smileSize, xPos, yPadding)
 
 
 def drawCell(game: Game, cell: Cell):
@@ -69,42 +115,42 @@ def drawCell(game: Game, cell: Cell):
 
     screenWidth, screenHeight = getScreenSize()
 
-    padding = 50
+    xPadding = 50
+    yPadding = 60
     cellSize = (math.floor(screenWidth / game.maxX) -
-                (math.floor(padding*2 / game.maxX)))
+                (math.floor(xPadding*2 / game.maxX)))
 
     boardYSize = cellSize * game.maxY
     yDiff = screenHeight - boardYSize
 
-    cellImage = Image.open(f"{path}/assets/{imageName}")
-    cellImage = cellImage.resize((cellSize, cellSize))
+    cellImagePath = f"{path}/assets/{imageName}"
 
-    raw_data = cellImage.tobytes("raw")
-    raw_len = len(raw_data)
-
-    x = cell.x * cellSize + padding
-    y = cell.y * cellSize + math.floor(yDiff / 2)
+    x = cell.x * cellSize + xPadding
+    y = cell.y * cellSize + math.floor(yDiff / 2) + yPadding
 
     cell.screenX = x
     cell.screenY = y
     cell.size = cellSize
 
-    try:
-        FBInk.fbink_print_raw_data(
-            fbfd, raw_data, cellImage.width, cellImage.height, raw_len, x, y, fbink_cfg)
-    except Exception as e:
-        print("drawCell: ", e)
-        FBInk.fbink_close(fbfd)
+    displayImage(cellImagePath, cellSize, cellSize, x,y)
 
+def drawTimer(number: int):
+    drawDotDisplay(number, "right")
+
+def drawFlagCount(number: int):
+    drawDotDisplay(number, "left")
+
+def drawCloseIcon():
+    closePath = f"{path}/assets/close.jpg"
+    displayImage(closePath, 60,60,0,0)
+    
 
 def getScreenSize() -> tuple[int, int]:
     return (state.screen_width, state.screen_height)
 
-
 def refreshScreen():
     d = ffi.new("FBInkRect *")
     FBInk.fbink_cls(fbfd, fbink_cfg, d, True)
-
 
 def closeDraw():
     refreshScreen()
@@ -117,17 +163,10 @@ def initDraw():
         screenWidth, screenHeight), color=(255, 255, 255))
     backgroundRaw = background.tobytes("raw")
 
-    closeSize = 100
-
-    close = Image.new(mode="RGBA", size=(
-        closeSize, closeSize), color=(100, 100, 100))
-    closeRaw = close.tobytes("raw")
 
     try:
         FBInk.fbink_print_raw_data(fbfd, backgroundRaw, background.width, background.height, len(
             backgroundRaw), 0, 0, fbink_cfg)
-        FBInk.fbink_print_raw_data(
-            fbfd, closeRaw, close.width, close.height, len(closeRaw), 0, 0, fbink_cfg)
     except Exception as e:
         print("initDraw: ", e)
         FBInk.fbink_close(fbfd)
