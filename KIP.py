@@ -1,26 +1,4 @@
-# Taken from https://raw.githubusercontent.com/Mavireck/Kobo-Input-Python/master/KIP.py
-
-#!/usr/bin/env python
-"""
-KIP : Kobo Input Python
-
-NOTE :
-To use this librairy easily, just use:
-# touchPath = "/dev/input/event1"
-# t = KIP.inputObject(touchPath, 1080, 1440)
-Then, you can use a while True loop:
-# while True:
-#     (x, y, err) = t.getInput()
-
-I can think of 2 ways to implement touch areas:
-1/  Keep arrays of length 4 containing x1,y1,x2,y2, the coordinates of the area.
-	Then, for each click, loop through the areas to find the one you clicked on.
-	You therefore hardcode which condition apply and which function to execute on click
-2/  Define a new class "touchArea([x1,y1,x2,y2],listofVar,functionOnClick)".
-	Then you can loop through all instances of the class to find the area you clicked on.
-	You may need to consider looping through a list of global variables 'listOfVar' that must all be True to execute the functionOnClick function.
-
-"""
+# Taken from https://github.com/Mavireck/Kobo-Input-Python and modified slightly
 
 import os
 import sys
@@ -106,7 +84,7 @@ class inputObject:
         self.touchDebounceTime = debounceTime
         self.lastTouchAreaSize = touchAreaSize
         self.isInputGrabbed = grabInput
-        os.set_blocking(self.devFile.fileno(), False)
+        #os.set_blocking(self.devFile.fileno(), False)
         if grabInput:
             ioctl(self.devFile, EVIOCGRAB(1), True)
 
@@ -199,18 +177,4 @@ class inputObject:
                         touchReleased = True
         ry = x
         rx = self.viewWidth - y + 1
-        # print("Results returned")
         return (rx, ry, touchPressed, touchReleased, None)
-#         # We've decoded one packet. Do we need to continue?
-#         if x >= 0 and y >= 0:
-#             # No, we have all the information we need
-#             break
-# 
-#         # To ensure we never get caught in an infinite loop
-#         if decodeEvAttempts < 5:
-#             decodeEvAttempts += 1
-#         else:
-#             x, y = -1, -1
-#             err = "unable to decode complete touch packet"
-#             print(err)
-#             return (x, y, touchPressed, touchReleased, err)
