@@ -84,7 +84,7 @@ class inputObject:
         self.touchDebounceTime = debounceTime
         self.lastTouchAreaSize = touchAreaSize
         self.isInputGrabbed = grabInput
-        #os.set_blocking(self.devFile.fileno(), False)
+        os.set_blocking(self.devFile.fileno(), False)
         if grabInput:
             ioctl(self.devFile, EVIOCGRAB(1), True)
 

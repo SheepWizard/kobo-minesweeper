@@ -119,12 +119,11 @@ def endGame(game: Game, won: bool):
                 if cell.isOpen:
                     continue
                 cell.isFlagged = True
-                game.flagsPlaced += 1
 
     timeDiff = (time.time() * 1000) - game.startTime
     drawBoard(game)
     drawTimer(math.floor(timeDiff / 1000))
-    drawFlagCount(game.minesCount - game.flagsPlaced)
+    drawFlagCount(0)
 
 def checkWin(game: Game):
     if game.nonMineCellsOpened < (game.maxX * game.maxY) - game.minesCount:
