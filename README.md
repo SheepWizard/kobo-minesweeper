@@ -3,6 +3,10 @@ Play minesweper on your Kobo device. Click on the cells to open, hold to place a
 
 ![](https://github.com/SheepWizard/kobo-minesweeper/blob/main/screenshots/screenshot_2.png?raw=true)
 
+# Video
+
+https://www.youtube.com/watch?v=MJ06zaX2aZM
+
 # Installation
 
 1. (optional)
