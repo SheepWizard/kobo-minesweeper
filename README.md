@@ -14,7 +14,7 @@ https://www.youtube.com/watch?v=MJ06zaX2aZM
 
 2. Install [FBink](https://www.mobileread.com/forums/showthread.php?t=299110"), python, [py-fbink](https://github.com/NiLuJe/py-fbink), and [pillow](https://pypi.org/project/Pillow/). All of this can be done by installing [kobo-stuff](https://www.mobileread.com/forums/showthread.php?t=254214)
 
-3. Add all files and directories from repo (excluding screenshots and readme) into `.adds/minesweeper/` directory on your kobo stuff. (`/mnt/onboard/.adds/minesweeper/` if you have root access)
+3. Add all files and directories from repo (excluding screenshots and readme) into `.adds/minesweeper/` directory on your kobo. (`/mnt/onboard/.adds/minesweeper/` if you have root access)
 
 4. Install [NickelMenu](https://github.com/pgaskin/NickelMenu/releases) to add a way to run the python script
 
