@@ -1,4 +1,3 @@
-import sys
 from _fbink import ffi, lib as FBInk
 from PIL import Image
 from common import Cell, Game
@@ -43,6 +42,7 @@ def getCellImage(cell: Cell):
 
     return getImageNameFromNumber(cell.number)
 
+
 def displayImage(path: str, width: int, height: int, xPos: int, yPos: int):
     image = Image.open(path)
     image = image.resize((width, height))
@@ -51,11 +51,11 @@ def displayImage(path: str, width: int, height: int, xPos: int, yPos: int):
     rawLen = len(rawData)
 
     try:
-        FBInk.fbink_print_raw_data(fbfd, rawData, width, height, rawLen, xPos, yPos, fbink_cfg)
+        FBInk.fbink_print_raw_data(
+            fbfd, rawData, width, height, rawLen, xPos, yPos, fbink_cfg)
     except Exception as e:
         print("Fails to draw: ", e)
-        
-    
+
 
 def drawDotDisplay(number: int, position: str):
     yPadding = 120
@@ -66,11 +66,10 @@ def drawDotDisplay(number: int, position: str):
     digitWidth = math.floor(digitHeight / 2)
 
     number = max(-99, min(number, 999))
-    negative = number < 0
 
     string = str(number)
     offset = 3 - len(string)
-    
+
     xStart = xPadding
     if position == "right":
         xStart = screenWidth - xPadding - (digitWidth*3)
@@ -80,10 +79,12 @@ def drawDotDisplay(number: int, position: str):
             subStr = string[i-offset]
             if subStr == "-":
                 imagePath = f"{path}/assets/number_blank.png"
-                displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
+                displayImage(imagePath, digitWidth,
+                             digitHeight, xStart, yPadding)
             else:
                 imagePath = f"{path}/assets/{dotDisplayImages[int(subStr)]}"
-                displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
+                displayImage(imagePath, digitWidth,
+                             digitHeight, xStart, yPadding)
         else:
             imagePath = f"{path}/assets/{dotDisplayImages[0]}"
             displayImage(imagePath, digitWidth, digitHeight, xStart, yPadding)
@@ -132,25 +133,30 @@ def drawCell(game: Game, cell: Cell):
     cell.screenY = y
     cell.size = cellSize
 
-    displayImage(cellImagePath, cellSize, cellSize, x,y)
+    displayImage(cellImagePath, cellSize, cellSize, x, y)
+
 
 def drawTimer(number: int):
     drawDotDisplay(number, "right")
 
+
 def drawFlagCount(number: int):
     drawDotDisplay(number, "left")
 
+
 def drawCloseIcon():
     closePath = f"{path}/assets/close.jpg"
-    displayImage(closePath, 60,60,0,0)
-    
+    displayImage(closePath, 60, 60, 0, 0)
+
 
 def getScreenSize() -> tuple[int, int]:
     return (state.screen_width, state.screen_height)
 
+
 def refreshScreen():
     d = ffi.new("FBInkRect *")
     FBInk.fbink_cls(fbfd, fbink_cfg, d, True)
+
 
 def closeDraw():
     refreshScreen()
@@ -162,7 +168,6 @@ def initDraw():
     background = Image.new(mode="RGB", size=(
         screenWidth, screenHeight), color=(255, 255, 255))
     backgroundRaw = background.tobytes("raw")
-
 
     try:
         FBInk.fbink_print_raw_data(fbfd, backgroundRaw, background.width, background.height, len(

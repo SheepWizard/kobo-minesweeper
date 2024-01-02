@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Callable, Optional
 
 
 @dataclass
@@ -27,3 +28,5 @@ class Game:
     smileRect: tuple[int, int, int, int] = (0, 0, 0, 0)
     gameOver: bool = False
     hitMine: bool = False
+    tapListener: Optional[Callable] = None
+    holdEndListener: Optional[Callable] = None
