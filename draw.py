@@ -154,8 +154,15 @@ def getScreenSize() -> tuple[int, int]:
 
 
 def refreshScreen():
-    d = ffi.new("FBInkRect *")
-    FBInk.fbink_cls(fbfd, fbink_cfg, d, True)
+    FBInk.fbink_refresh(fbfd, 0, 0, 0, 0, fbink_cfg)
+
+
+def disableRefresh():
+    fbink_cfg.no_refresh = True
+
+
+def enableRefresh():
+    fbink_cfg.no_refresh = False
 
 
 def closeDraw():
