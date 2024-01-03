@@ -2,7 +2,7 @@ import argparse
 from common import Cell, Game
 from random import randrange
 import math
-from draw import drawCloseIcon, drawTimer, drawFlagCount, closeDraw, initDraw, drawCell, drawSmile, getScreenSize, refreshScreen, disableRefresh, enableRefresh
+from draw import drawCellsBatch, drawCloseIcon, drawTimer, drawFlagCount, closeDraw, initDraw, drawCell, drawSmile, getScreenSize, refreshScreen, disableRefresh, enableRefresh
 import time
 import threading
 from stack import Stack
@@ -92,11 +92,10 @@ def moveMine(game: Game, cell: Cell):
 
 
 def openMultiple(game: Game, cell: Cell):
-    disableRefresh()
     myStack = Stack()
     cell.isOpen = True
     myStack.push(cell)
-
+    cellsToDraw: list[Cell] = []
     while myStack.size() > 0:
         poppedCell = myStack.pop()
         neighbours = getCellNeighbours(game.cells, poppedCell.x, poppedCell.y)
@@ -107,9 +106,8 @@ def openMultiple(game: Game, cell: Cell):
                 game.nonMineCellsOpened += 1
                 if neighbour.number == 0:
                     myStack.push(neighbour)
-                drawCell(game, neighbour)
-    enableRefresh()
-    refreshScreen()
+                cellsToDraw.append(neighbour)
+    drawCellsBatch(game, cellsToDraw)
 
 
 def endGame(game: Game, won: bool):
@@ -185,16 +183,20 @@ def createGame(x: int, y: int, mines: int):
 
 
 def drawBoard(game: Game):
+    enableRefresh()
     drawSmile(game)
     drawTimer(0)
     drawFlagCount(game.minesCount)
     drawCloseIcon()
     disableRefresh()
+    refreshScreen()
+
+    cellsToDraw: list[Cell] = []
     for cell1 in game.cells:
         for cell2 in cell1:
-            drawCell(game, cell2)
-    enableRefresh()
-    refreshScreen()
+            cellsToDraw.append(cell2)
+
+    drawCellsBatch(game, cellsToDraw)
 
 
 def getCellTouched(game: Game, touchX: int, touchY: int):

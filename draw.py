@@ -136,6 +136,17 @@ def drawCell(game: Game, cell: Cell):
     displayImage(cellImagePath, cellSize, cellSize, x, y)
 
 
+def drawCellsBatch(game: Game, cells: list[Cell]):
+    disableRefresh()
+    for i, cell in enumerate(cells):
+        if i % 20 == 0:
+            refreshScreen()
+        drawCell(game, cell)
+
+    enableRefresh()
+    refreshScreen()
+
+
 def drawTimer(number: int):
     drawDotDisplay(number, "right")
 
