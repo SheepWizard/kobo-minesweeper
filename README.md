@@ -12,7 +12,7 @@ https://www.youtube.com/watch?v=MJ06zaX2aZM
 1. (optional)
   Stop Nickel from scanning hidden directories. Find out how to do this [here](https://github.com/koreader/koreader/wiki/Installation-on-Kobo-devices#important-notes).
 
-2. Install [FBink](https://www.mobileread.com/forums/showthread.php?t=299110"), python, [py-fbink](https://github.com/NiLuJe/py-fbink), and [pillow](https://pypi.org/project/Pillow/). All of this can be done by installing [kobo-stuff](https://www.mobileread.com/forums/showthread.php?t=254214)
+2. Install [FBink](https://www.mobileread.com/forums/showthread.php?t=299110"), python, [py-fbink](https://github.com/NiLuJe/py-fbink), and [pillow](https://pypi.org/project/Pillow/). All of this can be done by installing [kobo-stuff](https://www.mobileread.com/forums/showthread.php?t=254214) (installing python requires extra steps when using kobo-stuff. Make sure you read full forum post)
 
 3. Add all files and directories from repo (excluding screenshots and readme) into `.adds/minesweeper/` directory on your kobo. (`/mnt/onboard/.adds/minesweeper/` if you have root access)
 
