@@ -29,43 +29,49 @@ def nonRepeatingNumbers(maxNumber: int):
     return getNumber
 
 
-def getCellNeighbours(cells: list[list[Cell]], x: int, y: int):
+def getCellNeighbours(game: Game, x: int, y: int) -> list[Cell]:
     neighbours: list[Cell] = []
     for i in range(-1, 2):
         for j in range(-1, 2):
             newX = i+x
             newY = j+y
-            if (x != newX or y != newY) and newX > -1 and newY > -1 and newX < len(cells) and newY < len(cells[newX]):
-                neighbours.append(cells[newY][newX])
+            if (x != newX or y != newY) and newX > -1 and newY > -1 and newX < game.maxX and newY < game.maxY:
+                neighbours.append(game.cells[newX][newY])
 
     return neighbours
 
 
-def generateGrid(x: int, y: int) -> list[list[Cell]]:
-    return [[Cell(i, j) for i in range(x)] for j in range(y)]
+def generateGrid(maxX: int, maxY: int) -> list[list[Cell]]:
+    cellList = []
+    for x in range(maxX):
+        cellList.append([])
+        for y in range(maxY):
+            cellList[x].append(Cell(x, y))
+
+    return cellList
 
 
-def placeMines(cells: list[list[Cell]], maxX: int, mineCount: int) -> list[Cell]:
-    randomNumberGenerator = nonRepeatingNumbers(len(cells) * len(cells[0]))
+def placeMines(game: Game, mineCount: int) -> list[Cell]:
+    randomNumberGenerator = nonRepeatingNumbers(game.maxX * game.maxY)
     cellsWithMines: list[Cell] = []
     for _ in range(mineCount):
         randomNumber = randomNumberGenerator()
         if randomNumber is None:
             continue
 
-        x = math.floor(randomNumber % maxX)
-        y = math.floor(randomNumber / maxX)
+        x = math.floor(randomNumber % game.maxX)
+        y = math.floor(randomNumber / game.maxX)
 
-        cells[x][y].isMine = True
+        game.cells[x][y].isMine = True
 
-        cellsWithMines.append(cells[x][y])
+        cellsWithMines.append(game.cells[x][y])
 
     return cellsWithMines
 
 
-def placeNumbers(cells: list[list[Cell]], cellsWithMines: list[Cell]):
+def placeNumbers(game: Game, cellsWithMines: list[Cell]):
     for cell in cellsWithMines:
-        neighbours = getCellNeighbours(cells, cell.x, cell.y)
+        neighbours = getCellNeighbours(game, cell.x, cell.y)
         for neighbourCell in neighbours:
             neighbourCell.number += 1
 
@@ -74,10 +80,10 @@ def moveMine(game: Game, cell: Cell):
     moved = False
     for y in range(game.maxY):
         for x in range(game.maxX):
-            if game.cells[y][x].isMine:
+            if game.cells[x][y].isMine:
                 continue
-            game.cells[y][x].isMine = True
-            neighbours = getCellNeighbours(game.cells, x, y)
+            game.cells[x][y].isMine = True
+            neighbours = getCellNeighbours(game, x, y)
             for neighbour in neighbours:
                 neighbour.number += 1
             moved = True
@@ -86,7 +92,7 @@ def moveMine(game: Game, cell: Cell):
             break
 
     cell.isMine = False
-    neighbours = getCellNeighbours(game.cells, cell.x, cell.y)
+    neighbours = getCellNeighbours(game, cell.x, cell.y)
     for neighbour in neighbours:
         neighbour.number -= 1
 
@@ -98,7 +104,7 @@ def openMultiple(game: Game, cell: Cell):
     cellsToDraw: list[Cell] = []
     while myStack.size() > 0:
         poppedCell = myStack.pop()
-        neighbours = getCellNeighbours(game.cells, poppedCell.x, poppedCell.y)
+        neighbours = getCellNeighbours(game, poppedCell.x, poppedCell.y)
 
         for neighbour in neighbours:
             if not neighbour.isFlagged and not neighbour.isOpen:
@@ -177,8 +183,8 @@ def openCell(game: Game, cell: Cell):
 def createGame(x: int, y: int, mines: int):
     currentGame = Game(generateGrid(x, y), x, y, mines)
     cellsWithMines = placeMines(
-        currentGame.cells, currentGame.maxX, currentGame.minesCount)
-    placeNumbers(currentGame.cells, cellsWithMines)
+        currentGame, currentGame.minesCount)
+    placeNumbers(currentGame, cellsWithMines)
     return currentGame
 
 
@@ -190,7 +196,6 @@ def drawBoard(game: Game):
     drawCloseIcon()
     disableRefresh()
     refreshScreen()
-
     cellsToDraw: list[Cell] = []
     for cell1 in game.cells:
         for cell2 in cell1:
@@ -218,7 +223,7 @@ def isSmileTouched(game: Game, touchX: int, touchY: int):
 
 
 def isCloseTouched(touchX: int, touchY: int):
-    if 0 <= touchX <= 80 and 0 <= touchY < 80:
+    if 0 <= touchX <= 120 and 0 <= touchY < 120:
         return True
     return False
 
